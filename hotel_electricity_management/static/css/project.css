@@ -1,0 +1,26 @@
+.block{
+  display:flex;
+  width:100vw;
+  height:100vh;
+  text-align:left;
+}
+.left-p{
+  flex:1;
+  background:whitesmoke;
+}
+.right-p{
+  flex:1;
+  background:#ece7f5;
+}
+
+.container {
+    width: 100%;
+    padding-right: 0;
+    padding-left: 0;
+    margin-right: 0;
+    margin-left: 0;
+}
+
+.heading{
+    text-align:left;
+}

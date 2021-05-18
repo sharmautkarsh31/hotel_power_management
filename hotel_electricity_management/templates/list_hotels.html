@@ -1,0 +1,25 @@
+{% extends 'base.html' %}
+{% load static %}
+
+
+{% block content %}
+
+
+{#    <section class="block">#}
+
+        <h2 class="col-md-12 heading" >Hotels</h2>
+
+        <ul class="liView gridStyle">
+            {% for hotel in hotels %}
+
+                <li><a href="{% url 'dashboard' id=hotel.id %}">{{ hotel.name }}</a></li>
+
+            {% endfor %}
+
+        </ul>
+
+
+{#    </section>#}
+
+
+{% endblock %}

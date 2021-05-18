@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+{% load static %}
+
+
+{% block content %}
+
+
+<section class="block">
+
+  <div class="left-p">
+  <h2 class="heading">Floor:</h2>
+
+      {%  for floor in hotel_artefacts.floor  %}
+          <ul class="liView gridStyle">{{ floor.floor_name }}</ul>
+
+            {% for main_corridor in floor.main_corridor %}
+                <span>Light: {{ main_corridor.light }}</span>
+                <span>AC: {{ main_corridor.air_conditioner }}</span>
+            {% endfor %}
+      {% endfor %}
+  </div>
+  <div class="right-p">
+      Right
+  </div>
+
+</section>
+
+
+{% endblock %}
