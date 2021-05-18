@@ -31,10 +31,14 @@
 
 <!-- PROJECT LOGO -->
 <br />
-<p align="center">
-  <a href="https://github.com/sharmautkarsh31/hotel_power_management">
-    <img src="images/logo.png" alt="Logo" width="80" height="80">
-  </a>
+
+[comment]: <> (<p align="center">)
+
+[comment]: <> (  <a href="https://github.com/sharmautkarsh31/hotel_power_management">)
+
+[comment]: <> (    <img src="images/logo.png" alt="Logo" width="80" height="80">)
+
+[comment]: <> (  </a>)
 
   <h3 align="center">Hotel Power Management</h3>
 
@@ -120,8 +124,9 @@
 
 ### Built With
 
-* [Python](https://www.python.org/)
+* [Python3](https://www.python.org/)
 * [Django](https://docs.djangoproject.com/en/3.2/)
+* [ApScheduler](https://apscheduler.readthedocs.io/en/stable/)
 
 
 <!-- GETTING STARTED -->
@@ -144,24 +149,23 @@ Things you need to use the software.
    ```sh
    git clone https://github.com/sharmautkarsh31/hotel_power_management.git
    ```
-   Clone and go to the root folder of the project
+   *Clone, go to the root folder of the project and confirm that you can see `manage.py` file in current folder.*
+
 2. Create Python Virtual Environment <br>
    ```sh
    python3 -m venv venv
    ```
+   
 3. Activate environment 
    ```sh
    source venv/bin/activate
    ```
-4. Get to the project root <br>
-   ```sh
-   cd hotel_electricity_management
-   ```
-   Run the above command and confirm that you can see `manage.py` file in current folder.
+   
 4. Install PIP packages
    ```sh
    pip install -r requirements.txt
    ```
+   
 5. Create an empty database in postgresql:<br>
    * Database name: `hotel_management`<br>
    * Role: `postgres`<br>
@@ -171,7 +175,6 @@ Things you need to use the software.
    ```sh
    python manage.py migrate
    ```
-7. In settings.py file, change the 
     
 7. Run server
    ```sh
@@ -183,12 +186,11 @@ Things you need to use the software.
 ## Usage
 
 * To create hotel and its artefacts, go to http://127.0.0.1:8000/api/hotel/ and fill in the details.
-* Start the management of appliances:<br>
-  *Run the following command in a new terminal*
+* Start the management of appliances in a new terminal:<br>
    ```sh
    python manage.py start_electricity_management
    ```
-* To look at the live monitor that refreshes every 10 seconds, run following command
+* To look at the live monitor that refreshes every 10 seconds, run following command in a new terminal
    ```sh
    python manage.py runscript scripts.continuous_output -v3
    ```
@@ -231,12 +233,15 @@ Project Link: [https://github.com/sharmautkarsh31/hotel_power_management](https:
 
 
 
-<!-- ACKNOWLEDGEMENTS -->
-## Acknowledgements
+[comment]: <> (<!-- ACKNOWLEDGEMENTS -->)
 
-* []()
-* []()
-* []()
+[comment]: <> (## Acknowledgements)
+
+[comment]: <> (* []&#40;&#41;)
+
+[comment]: <> (* []&#40;&#41;)
+
+[comment]: <> (* []&#40;&#41;)
 
 
 
