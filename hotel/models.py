@@ -1,3 +1,4 @@
+from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.utils.timezone import now
 
@@ -11,6 +12,7 @@ class Hotel(models.Model):
 class Floor(models.Model):
     name = models.CharField(max_length=255, unique=True)
     hotel = models.ForeignKey(Hotel, on_delete=models.CASCADE)
+    extreme_power_saver = models.BooleanField(default=False)
 
     def save(self, *args, **kwargs):
         self = generic_save_model_name(self)
@@ -20,13 +22,21 @@ class Floor(models.Model):
         return self.name
 
 
+class FloorPowerConsumptionPerHour(models.Model):
+    floor = models.ForeignKey(Floor, on_delete=models.CASCADE)
+    hour_of_day = models.IntegerField(validators=[
+            MaxValueValidator(23),
+            MinValueValidator(0)
+        ])
+    units_consumed = models.FloatField(default=0.0)
+
+
 class Corridor(models.Model):
     name = models.CharField(max_length=255, unique=True)
     floor = models.ForeignKey(Floor, on_delete=models.CASCADE)
 
     class Meta:
         abstract = True
-
 
 
 class MainCorridor(Corridor):
@@ -48,9 +58,9 @@ class SubCorridor(Corridor):
     def __str__(self):
         return self.name
 
+
 class Appliance(models.Model):
     name = models.CharField(max_length=255, unique=True)
-    consumption_unit = models.IntegerField(default=5)
     turned_on = models.BooleanField(default=True)
     main_corridor = models.ForeignKey(MainCorridor, models.CASCADE, null=True, blank=True)
     sub_corridor = models.ForeignKey(SubCorridor, models.CASCADE, null=True, blank=True)
@@ -59,8 +69,8 @@ class Appliance(models.Model):
         abstract = True
 
 
-
 class Light(Appliance):
+    power_consumption_unit = 5
 
     def save(self, *args, **kwargs):
         self = generic_save_model_name(self)
@@ -71,6 +81,7 @@ class Light(Appliance):
 
 
 class AirConditioner(Appliance):
+    power_consumption_unit = 10
 
     def save(self, *args, **kwargs):
         self = generic_save_model_name(self)

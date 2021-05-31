@@ -33,6 +33,15 @@ class Command(BaseCommand):
         logger.info("Added job 'motion_detection_trigger'.")
 
         scheduler.add_job(
+            TriggerActions.check_floor_power_consumption_per_hour,
+            trigger=CronTrigger(second="*/1"),  # Every 1 seconds
+            id="check_floor_power_consumption_per_hour",
+            max_instances=1,
+            replace_existing=False
+        )
+        logger.info("Added job 'motion_detection_trigger'.")
+
+        scheduler.add_job(
             TriggerActions.night_shift_start_trigger,
             trigger=CronTrigger(minute=settings.NIGHT_SHIFT_START['minute'],
                                 hour=settings.NIGHT_SHIFT_START['hour'],

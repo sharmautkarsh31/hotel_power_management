@@ -2,7 +2,7 @@ import random
 
 from django.test import TestCase
 
-from hotel.models import SubCorridor, Hotel
+from hotel.models import SubCorridor
 
 
 class TestTriggerMotionAPI(TestCase):

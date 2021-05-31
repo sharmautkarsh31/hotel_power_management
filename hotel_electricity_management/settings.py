@@ -202,6 +202,9 @@ NIGHT_SHIFT_START = {"hour":env('NIGHT_SHIFT_START_HOUR',default='18'),
                      "minute":env('NIGHT_SHIFT_START_MINUTE',default='0')}
 NIGHT_SHIFT_END = {"hour":env('NIGHT_SHIFT_END_HOUR',default='6'),
                      "minute":env('NIGHT_SHIFT_END_MINUTE',default='0')}
-EXTREME_SAVER = True
 LIGHTS_TURN_ON_INTERVAL = 60
+
+MAIN_CORRIDOR_UNIT_CONSUMPTION_LIMIT = 15
+SUB_CORRIDOR_UNIT_CONSUMPTION_LIMIT = 10
+
 
