@@ -5,8 +5,7 @@ from django.conf import settings
 from django.utils.timezone import now
 from django_apscheduler.models import DjangoJobExecution
 
-from hotel.models import Light, AirConditioner, MotionDetection, SubCorridor, Floor, FloorPowerConsumptionPerHour, \
-    MainCorridor
+from hotel.models import MotionDetection, Floor, FloorPowerConsumptionPerHour, Appliance, ApplianceType, Corridor
 
 units_consumed_per_second_factor = 1/3600
 
@@ -26,30 +25,30 @@ class TriggerActions():
 
     @staticmethod
     def power_consumption_limit_breach(floor, power_consumption):
-        floor_maincorridors = MainCorridor.objects.filter(floor=floor)
-        floor_subcorridors = SubCorridor.objects.filter(floor=floor)
+        floor_maincorridors = Corridor.objects.filter(corridor_type__type='MAIN_CORRIDOR',floor=floor)
+        floor_subcorridors = Corridor.objects.filter(corridor_type__type='SUB_CORRIDOR',floor=floor)
         if power_consumption.units_consumed >= (
                 floor_maincorridors.count() * settings.MAIN_CORRIDOR_UNIT_CONSUMPTION_LIMIT) + \
                 (floor_subcorridors.count() * settings.SUB_CORRIDOR_UNIT_CONSUMPTION_LIMIT) - \
-                (floor_subcorridors.count() * Light.power_consumption_unit):
+                (floor_subcorridors.count() * ApplianceType.objects.get(type='LIGHT').power_consumption_unit):
             floor.extreme_power_saver = True
             floor.save()
 
             # turn off all ACs of the subcorridor
-            AirConditioner.objects.filter(sub_corridor__in=floor_subcorridors).update(turned_on=False)
+            Appliance.objects.filter(appliance_type__type='AIR_CONDITIONER',corridor__in=floor_subcorridors).update(turned_on=False)
         else:
             floor.extreme_power_saver = False
             floor.save()
 
     @staticmethod
     def meter_power_consumption_per_hour(floor):
-        sub_corridor_lights_count = Light.objects.filter(sub_corridor__floor=floor, turned_on=True).count()
-        sub_corridor_ac_count = AirConditioner.objects.filter(sub_corridor__floor=floor, turned_on=True).count()
-        main_corridor_lights_count = Light.objects.filter(main_corridor__floor=floor, turned_on=True).count()
-        main_corridor_ac_count = AirConditioner.objects.filter(main_corridor__floor=floor, turned_on=True).count()
+        sub_corridor_lights_count = Appliance.objects.filter(appliance_type__type='LIGHT',corridor__corridor_type__type='SUB_CORRIDOR',corridor__floor=floor,turned_on=True).count()
+        sub_corridor_ac_count = Appliance.objects.filter(appliance_type__type='AIR_CONDITIONER',corridor__corridor_type__type='SUB_CORRIDOR',corridor__floor=floor,turned_on=True).count()
+        main_corridor_lights_count = Appliance.objects.filter(appliance_type__type='LIGHT',corridor__corridor_type__type='MAIN_CORRIDOR', corridor__floor=floor,turned_on=True).count()
+        main_corridor_ac_count = Appliance.objects.filter(appliance_type__type='AIR_CONDITIONER',corridor__corridor_type__type='MAIN_CORRIDOR', corridor__floor=floor,turned_on=True).count()
         power_consumption_per_second = (
-                                               (sub_corridor_lights_count + main_corridor_lights_count) * Light.power_consumption_unit +
-                                               (sub_corridor_ac_count + main_corridor_ac_count) * AirConditioner.power_consumption_unit
+                                           (sub_corridor_lights_count + main_corridor_lights_count) * ApplianceType.objects.get(type='LIGHT').power_consumption_unit +
+                                           (sub_corridor_ac_count + main_corridor_ac_count) * ApplianceType.objects.get(type='AIR_CONDITIONER').power_consumption_unit
                                        ) * units_consumed_per_second_factor
         hour_of_the_day = now().hour
         power_consumption, _ = FloorPowerConsumptionPerHour.objects.get_or_create(floor=floor,
@@ -86,8 +85,8 @@ class TriggerActions():
             action_taken=False,
             motion_timestamp__lt=now() - timedelta(seconds=settings.LIGHTS_TURN_ON_INTERVAL)
         )
-        sub_corridors_to_be_revereted = reverse_action_motion_detection_objs.values_list('sub_corridor', flat=True)
-        sub_corridors_with_recent_motion = motion_detection_objs.values_list('sub_corridor', flat=True)
+        sub_corridors_to_be_revereted = reverse_action_motion_detection_objs.values_list('corridor', flat=True)
+        sub_corridors_with_recent_motion = motion_detection_objs.values_list('corridor', flat=True)
 
         # Eliminating sub-corridors where someone passed between the LIGHTS_TURN_ON_INTERVAL.
         actual_corridors_for_reverse_action = set(sub_corridors_to_be_revereted) - set(sub_corridors_with_recent_motion)
@@ -102,25 +101,33 @@ class TriggerActions():
     @staticmethod
     def motion_detection_action(motion_detection_objs):
         # turning lights on
-        lights = motion_detection_objs.values_list('sub_corridor__light', flat=True)
-        Light.objects.filter(id__in=lights).update(turned_on=True)
+        Appliance.objects.filter(appliance_type__type='LIGHT',
+                                 corridor__corridor_type__type='SUB_CORRIDOR',
+                                 corridor_id__in=motion_detection_objs.values_list('corridor_id')
+                                 ).update(turned_on=True)
 
         # turning ac off
-        AirConditioner.objects.filter(sub_corridor__floor__extreme_power_saver=False,
-                                           sub_corridor__motiondetection__in=motion_detection_objs).update(turned_on=False)
-
+        Appliance.objects.filter(appliance_type__type='AIR_CONDITIONER',
+                                 corridor__floor__extreme_power_saver=False,
+                                 corridor__corridor_type__type='SUB_CORRIDOR',
+                                 corridor_id__in=motion_detection_objs.values_list('corridor_id')
+                                 ).update(turned_on=False)
 
     @staticmethod
     def reverse_motion_detection_action(sub_corridors_ids):
         # turning lights off
-        sub_corridors = SubCorridor.objects.filter(id__in=sub_corridors_ids)
-        lights = sub_corridors.values_list('light', flat=True)
-        Light.objects.filter(id__in=lights).update(turned_on=False)
+        Appliance.objects.filter(appliance_type__type='LIGHT',
+                                          corridor__corridor_type__type='SUB_CORRIDOR',
+                                          corridor_id__in=sub_corridors_ids,
+                                          ).update(turned_on=False)
 
         # turning ac on
 
-        AirConditioner.objects.filter(sub_corridor__floor__extreme_power_saver=False,
-                                      sub_corridor__motiondetection__in=sub_corridors_ids).update(turned_on=True)
+        Appliance.objects.filter(appliance_type__type='AIR_CONDITIONER',
+                                 corridor__floor__extreme_power_saver=False,
+                                 corridor__corridor_type__type='SUB_CORRIDOR',
+                                 corridor_id__in=sub_corridors_ids
+                                 ).update(turned_on=True)
 
 
     @staticmethod
@@ -129,12 +136,12 @@ class TriggerActions():
         settings.NIGHT_SHIFT_ACTIVE = True
 
         # Turning on all lights and AC in the main corridor
-        Light.objects.filter(main_corridor__isnull=False).update(turned_on=True)
-        AirConditioner.objects.filter(main_corridor__isnull=False).update(turned_on=True)
+        Appliance.objects.filter(appliance_type__type='LIGHT',corridor__corridor_type__type='MAIN_CORRIDOR').update(turned_on=True)
+        Appliance.objects.filter(appliance_type__type='AIR_CONDITIONER',corridor__corridor_type__type='MAIN_CORRIDOR').update(turned_on=True)
 
         # Turning off all lights and turning on all ac in the sub corridor
-        Light.objects.filter(sub_corridor__isnull=False).update(turned_on=False)
-        AirConditioner.objects.filter(sub_corridor__isnull=False).update(turned_on=True)
+        Appliance.objects.filter(appliance_type__type='LIGHT',corridor__corridor_type__type='SUB_CORRIDOR').update(turned_on=False)
+        Appliance.objects.filter(appliance_type__type='AIR_CONDITIONER',corridor__corridor_type__type='SUB_CORRIDOR').update(turned_on=True)
 
 
     @staticmethod
@@ -143,10 +150,10 @@ class TriggerActions():
         settings.NIGHT_SHIFT_ACTIVE = False
 
         # Turning off all lights
-        Light.objects.all().update(turned_on=False)
+        Appliance.objects.filter(appliance_type__type='LIGHT').update(turned_on=False)
 
         # Turning on all ACs
-        AirConditioner.objects.all().update(turned_on=True)
+        Appliance.objects.filter(appliance_type__type='AIR_CONDITIONER').update(turned_on=True)
 
 
     @staticmethod

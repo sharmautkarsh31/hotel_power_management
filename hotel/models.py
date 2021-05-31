@@ -2,7 +2,7 @@ from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.utils.timezone import now
 
-from hotel.utils.helpers import generic_save_model_name
+from hotel.utils.helpers import generic_save_model_name, create_model_name
 
 
 class Hotel(models.Model):
@@ -31,60 +31,38 @@ class FloorPowerConsumptionPerHour(models.Model):
     units_consumed = models.FloatField(default=0.0)
 
 
+class CorridorType(models.Model):
+    type = models.CharField(max_length=255, unique=True)
+    name = models.CharField(max_length=255, unique=True)
+
+
 class Corridor(models.Model):
     name = models.CharField(max_length=255, unique=True)
     floor = models.ForeignKey(Floor, on_delete=models.CASCADE)
-
-    class Meta:
-        abstract = True
-
-
-class MainCorridor(Corridor):
+    corridor_type = models.ForeignKey(CorridorType, on_delete=models.CASCADE)
 
     def save(self, *args, **kwargs):
-        self = generic_save_model_name(self)
+        self.name = 'Floor'+ str(self.floor.id) + ' ' + create_model_name(self,name=self.corridor_type.name)
         super().save(*args, **kwargs)
 
     def __str__(self):
         return self.name
 
 
-class SubCorridor(Corridor):
-
-    def save(self, *args, **kwargs):
-        self = generic_save_model_name(self)
-        super().save(*args, **kwargs)
-
-    def __str__(self):
-        return self.name
+class ApplianceType(models.Model):
+    type = models.CharField(max_length=255, unique=True)
+    name = models.CharField(max_length=255, unique=True)
+    power_consumption_unit = models.IntegerField()
 
 
 class Appliance(models.Model):
     name = models.CharField(max_length=255, unique=True)
+    appliance_type = models.ForeignKey(ApplianceType, models.CASCADE, null=True, blank=True)
     turned_on = models.BooleanField(default=True)
-    main_corridor = models.ForeignKey(MainCorridor, models.CASCADE, null=True, blank=True)
-    sub_corridor = models.ForeignKey(SubCorridor, models.CASCADE, null=True, blank=True)
-
-    class Meta:
-        abstract = True
-
-
-class Light(Appliance):
-    power_consumption_unit = 5
+    corridor = models.ForeignKey(Corridor, models.CASCADE, null=True, blank=True)
 
     def save(self, *args, **kwargs):
-        self = generic_save_model_name(self)
-        super().save(*args, **kwargs)
-
-    def __str__(self):
-        return self.name
-
-
-class AirConditioner(Appliance):
-    power_consumption_unit = 10
-
-    def save(self, *args, **kwargs):
-        self = generic_save_model_name(self)
+        self = generic_save_model_name(self,self.appliance_type.name)
         super().save(*args, **kwargs)
 
     def __str__(self):
@@ -93,11 +71,9 @@ class AirConditioner(Appliance):
 
 class MotionDetection(models.Model):
     motion_timestamp = models.DateTimeField(default=now)
-    sub_corridor = models.ForeignKey(SubCorridor, models.CASCADE, null=True, blank=True)
+    corridor = models.ForeignKey(Corridor, models.CASCADE, null=True, blank=True)
     action_taken = models.BooleanField(default=False)
 
     def __str__(self):
-        return (self.sub_corridor.name + self.motion_timestamp.strftime('%B %d %Y %H:%M:%S'))
-
-
+        return (self.corridor.name + self.motion_timestamp.strftime('%B %d %Y %H:%M:%S'))
 

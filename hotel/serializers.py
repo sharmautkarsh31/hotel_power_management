@@ -4,39 +4,50 @@ from django.db import transaction
 from django.utils import timezone
 from rest_framework import serializers
 
-from hotel.models import Hotel, Floor, MainCorridor, SubCorridor, AirConditioner, Light, MotionDetection
+from hotel.models import Hotel, Floor, Corridor, MotionDetection, Appliance, ApplianceType, CorridorType
 
 
-class MainCorridorSerializer(serializers.ModelSerializer):
-    main_corridor_name = serializers.CharField(source='name',read_only=True)
+class CorridorSerializer(serializers.ModelSerializer):
     light = serializers.SerializerMethodField()
     air_conditioner = serializers.SerializerMethodField()
 
     def get_light(self,obj):
-        return "On" if obj.light_set.first().turned_on else "Off"
+        light = obj.appliance_set.filter(appliance_type__type='LIGHT').first()
+        if not light:
+            return "No Light"
+        return "On" if light.turned_on else "Off"
 
     def get_air_conditioner(self,obj):
-        return "On" if obj.airconditioner_set.first().turned_on else "Off"
+        air_conditioner = obj.appliance_set.filter(appliance_type__type='AIR_CONDITIONER').first()
+        if not air_conditioner:
+            return "No AC"
+        return "On" if air_conditioner.turned_on else "Off"
 
     class Meta:
-        model = MainCorridor
-        fields = ("main_corridor_name", "light", "air_conditioner")
+        model = Corridor
+        fields = ("name", "light", "air_conditioner")
 
-
-class SubCorridorSerializer(serializers.ModelSerializer):
-    sub_corridor_name = serializers.CharField(source='name',read_only=True)
-    light = serializers.SerializerMethodField()
-    air_conditioner = serializers.SerializerMethodField()
-
-    def get_light(self,obj):
-        return "On" if obj.light_set.first().turned_on else "Off"
-
-    def get_air_conditioner(self,obj):
-        return "On" if obj.airconditioner_set.first().turned_on else "Off"
-
-    class Meta:
-        model = SubCorridor
-        fields = ("sub_corridor_name", "light", "air_conditioner")
+#
+# class SubCorridorSerializer(serializers.ModelSerializer):
+#     sub_corridor_name = serializers.CharField(source='name',read_only=True)
+#     light = serializers.SerializerMethodField()
+#     air_conditioner = serializers.SerializerMethodField()
+#
+#     def get_light(self,obj):
+#         light = obj.appliance_set.filter(appliance_type__type='LIGHT').first()
+#         if not light:
+#             return "No Light"
+#         return "On" if light.turned_on else "Off"
+#
+#     def get_air_conditioner(self,obj):
+#         air_conditioner = obj.appliance_set.filter(appliance_type__type='AIR_CONDITIONER').first()
+#         if not air_conditioner:
+#             return "No AC"
+#         return "On" if air_conditioner.turned_on else "Off"
+#
+#     class Meta:
+#         model = SubCorridor
+#         fields = ("sub_corridor_name", "light", "air_conditioner")
 
 
 class FloorSerializer(serializers.ModelSerializer):
@@ -45,10 +56,10 @@ class FloorSerializer(serializers.ModelSerializer):
     sub_corridor = serializers.SerializerMethodField()
 
     def get_main_corridor(self,obj):
-        return MainCorridorSerializer(obj.maincorridor_set.all(), many=True).data
+        return CorridorSerializer(obj.corridor_set.filter(corridor_type__type='MAIN_CORRIDOR'), many=True).data
 
     def get_sub_corridor(self,obj):
-        return SubCorridorSerializer(obj.subcorridor_set.all(), many=True).data
+        return CorridorSerializer(obj.corridor_set.filter(corridor_type__type='SUB_CORRIDOR'), many=True).data
 
     class Meta:
         model = Floor
@@ -84,6 +95,12 @@ class HotelArtefactCreateSerializer(serializers.Serializer):
             #create Hotel
             hotel = Hotel.objects.create(name=self.validated_data['hotel_name'])
 
+            light_type = ApplianceType.objects.get(type='LIGHT')
+            air_conditioner_type = ApplianceType.objects.get(type='AIR_CONDITIONER')
+
+            sub_corridor_type = CorridorType.objects.get(type='SUB_CORRIDOR')
+            main_corridor_type = CorridorType.objects.get(type='MAIN_CORRIDOR')
+
             for i in range(self.validated_data['floors']):
 
                 # create floor
@@ -91,15 +108,15 @@ class HotelArtefactCreateSerializer(serializers.Serializer):
 
                 # create sub_corridor
                 for i in range(self.validated_data['sub_corridors']):
-                    sub_corridor = SubCorridor.objects.create(floor=floor)
-                    Light.objects.create(sub_corridor=sub_corridor)
-                    AirConditioner.objects.create(sub_corridor=sub_corridor)
+                    sub_corridor = Corridor.objects.create(floor=floor,corridor_type=sub_corridor_type)
+                    Appliance.objects.create(corridor=sub_corridor,appliance_type=light_type)
+                    Appliance.objects.create(corridor=sub_corridor,appliance_type=air_conditioner_type)
 
                 # create main_corridors
                 for i in range(self.validated_data['main_corridors']):
-                    main_corridor = MainCorridor.objects.create(floor=floor)
-                    Light.objects.create(main_corridor=main_corridor)
-                    AirConditioner.objects.create(main_corridor=main_corridor)
+                    main_corridor = Corridor.objects.create(floor=floor,corridor_type=main_corridor_type)
+                    Appliance.objects.create(corridor=main_corridor,appliance_type=light_type)
+                    Appliance.objects.create(corridor=main_corridor,appliance_type=air_conditioner_type)
         return hotel
 
 
@@ -107,4 +124,4 @@ class MotionDetectionSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = MotionDetection
-        fields = ("sub_corridor",)
+        fields = ("corridor",)

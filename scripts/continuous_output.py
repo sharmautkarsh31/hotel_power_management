@@ -2,7 +2,6 @@ import json
 from time import sleep
 
 import requests
-from django.conf import settings
 from django.utils import timezone
 
 from hotel.models import Hotel
@@ -29,11 +28,11 @@ def print_response(response):
         print(floor['floor_name'])
         print("    Main Corridors:-")
         for main_corridor in floor['main_corridor']:
-            print("        ", main_corridor['main_corridor_name'], "--> Light: ", main_corridor['light'], ", AC: ",
+            print("        ", main_corridor['name'], "--> Light: ", main_corridor['light'], ", AC: ",
                   main_corridor['air_conditioner'], "\n")
             print("    Sub Corridors:-")
             for sub_corridor in floor['sub_corridor']:
-                print("        ", sub_corridor['sub_corridor_name'], "--> Light: ", sub_corridor['light'], ", AC: ",
+                print("        ", sub_corridor['name'], "--> Light: ", sub_corridor['light'], ", AC: ",
                       sub_corridor['air_conditioner'], "\n")
 
 def main():

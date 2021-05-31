@@ -198,8 +198,8 @@ SCHEDULER_CONFIG = {
 
 # variable for night shift
 NIGHT_SHIFT_ACTIVE = False
-NIGHT_SHIFT_START = {"hour":env('NIGHT_SHIFT_START_HOUR',default='18'),
-                     "minute":env('NIGHT_SHIFT_START_MINUTE',default='0')}
+NIGHT_SHIFT_START = {"hour":env('NIGHT_SHIFT_START_HOUR',default='21'),
+                     "minute":env('NIGHT_SHIFT_START_MINUTE',default='36')}
 NIGHT_SHIFT_END = {"hour":env('NIGHT_SHIFT_END_HOUR',default='6'),
                      "minute":env('NIGHT_SHIFT_END_MINUTE',default='0')}
 LIGHTS_TURN_ON_INTERVAL = 60

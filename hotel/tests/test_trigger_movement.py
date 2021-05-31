@@ -2,7 +2,7 @@ import random
 
 from django.test import TestCase
 
-from hotel.models import SubCorridor
+from hotel.models import Corridor
 
 
 class TestTriggerMotionAPI(TestCase):
@@ -14,7 +14,7 @@ class TestTriggerMotionAPI(TestCase):
         self.sub_corridors_per_floor = 2
         self.main_corridors_per_floor = 1
         self.create_hotel_data()
-        sub_corridors = SubCorridor.objects.all().values_list('id',flat=True)
+        sub_corridors = Corridor.objects.filter(corridor_type__type='SUB_CORRIDOR').values_list('id',flat=True)
         self.random_sub_corridor_id = random.choice(sub_corridors)
 
     def create_hotel_data(self):
@@ -36,7 +36,7 @@ class TestTriggerMotionAPI(TestCase):
 
     def test_invalid_sub_corridor(self):
         payload = {
-            "sub_corridor": "abc"
+            "corridor": "abc"
         }
         response = self.client.post(self.url, data=payload, content_type='application/json')
         assert response.status_code == 400

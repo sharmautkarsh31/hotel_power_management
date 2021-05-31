@@ -1,4 +1,3 @@
-import datetime
 import logging
 
 import pytz
@@ -7,7 +6,6 @@ from django.conf import settings
 from apscheduler.schedulers.blocking import BlockingScheduler
 from apscheduler.triggers.cron import CronTrigger
 from django.core.management.base import BaseCommand
-from django.utils import timezone
 from django_apscheduler.jobstores import DjangoJobStore
 
 from hotel.utils.scheduler_triggers import TriggerActions
@@ -37,7 +35,7 @@ class Command(BaseCommand):
             trigger=CronTrigger(second="*/1"),  # Every 1 seconds
             id="check_floor_power_consumption_per_hour",
             max_instances=1,
-            replace_existing=False
+            replace_existing=True
         )
         logger.info("Added job 'motion_detection_trigger'.")
 
