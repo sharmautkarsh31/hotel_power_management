@@ -27,28 +27,6 @@ class CorridorSerializer(serializers.ModelSerializer):
         model = Corridor
         fields = ("name", "light", "air_conditioner")
 
-#
-# class SubCorridorSerializer(serializers.ModelSerializer):
-#     sub_corridor_name = serializers.CharField(source='name',read_only=True)
-#     light = serializers.SerializerMethodField()
-#     air_conditioner = serializers.SerializerMethodField()
-#
-#     def get_light(self,obj):
-#         light = obj.appliance_set.filter(appliance_type__type='LIGHT').first()
-#         if not light:
-#             return "No Light"
-#         return "On" if light.turned_on else "Off"
-#
-#     def get_air_conditioner(self,obj):
-#         air_conditioner = obj.appliance_set.filter(appliance_type__type='AIR_CONDITIONER').first()
-#         if not air_conditioner:
-#             return "No AC"
-#         return "On" if air_conditioner.turned_on else "Off"
-#
-#     class Meta:
-#         model = SubCorridor
-#         fields = ("sub_corridor_name", "light", "air_conditioner")
-
 
 class FloorSerializer(serializers.ModelSerializer):
     floor_name = serializers.CharField(source='name',read_only=True)

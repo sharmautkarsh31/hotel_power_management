@@ -85,16 +85,24 @@ class TestTriggerMotionAPI(TestCase):
 
         TriggerActions.motion_detection_trigger()
 
-        assert Appliance.objects.filter(appliance_type__type='LIGHT',corridor__floor=self.floor).first().turned_on==True
-        assert Appliance.objects.filter(appliance_type__type='AIR_CONDITIONER',corridor__floor=self.floor).first().turned_on==False
+        assert Appliance.objects.filter(appliance_type__type='LIGHT',
+                                        corridor__corridor_type__type='SUB_CORRIDOR',
+                                        corridor__floor=self.floor).first().turned_on==True
+        assert Appliance.objects.filter(appliance_type__type='AIR_CONDITIONER',
+                                        corridor__corridor_type__type='SUB_CORRIDOR',
+                                        corridor__floor=self.floor).first().turned_on==False
 
     @override_settings(LIGHTS_TURN_ON_INTERVAL=2)
     def test_motion_detection_action_extreme_power_saver_on(self):
         self.floor.extreme_power_saver = True
         self.floor.save()
 
-        light = Appliance.objects.filter(appliance_type__type='LIGHT',corridor__floor=self.floor).first(); light.turned_on = False; light.save()
-        ac = Appliance.objects.filter(appliance_type__type='AIR_CONDITIONER',corridor__floor=self.floor).first(); ac.turned_on = False; ac.save()
+        light = Appliance.objects.filter(appliance_type__type='LIGHT',
+                                         corridor__corridor_type__type='SUB_CORRIDOR',
+                                         corridor__floor=self.floor).first(); light.turned_on = False; light.save()
+        ac = Appliance.objects.filter(appliance_type__type='AIR_CONDITIONER',
+                                      corridor__corridor_type__type='SUB_CORRIDOR',
+                                      corridor__floor=self.floor).first(); ac.turned_on = False; ac.save()
 
         payload = {
             "corridor": Corridor.objects.filter(corridor_type__type='SUB_CORRIDOR',floor=self.floor).first().id
@@ -104,13 +112,70 @@ class TestTriggerMotionAPI(TestCase):
 
         TriggerActions.motion_detection_trigger()
 
-        assert Appliance.objects.filter(appliance_type__type='LIGHT',sub_corridor__floor=self.floor).first().turned_on == True
-        assert Appliance.objects.filter(appliance_type__type='AIR_CONDITIONER',sub_corridor__floor=self.floor).first().turned_on == False
+        assert Appliance.objects.filter(appliance_type__type='LIGHT',
+                                        corridor__corridor_type__type='SUB_CORRIDOR',
+                                        corridor__floor=self.floor).first().turned_on == True
+        assert Appliance.objects.filter(appliance_type__type='AIR_CONDITIONER',
+                                        corridor__corridor_type__type='SUB_CORRIDOR',
+                                        corridor__floor=self.floor).first().turned_on == False
 
         sleep(3)
 
         TriggerActions.motion_detection_trigger()
 
-        assert Appliance.objects.filter(appliance_type__type='LIGHT',sub_corridor__floor=self.floor).first().turned_on==False
-        assert Appliance.objects.filter(appliance_type__type='AIR_CONDITIONER',sub_corridor__floor=self.floor).first().turned_on==False
+        assert Appliance.objects.filter(appliance_type__type='LIGHT',
+                                        corridor__corridor_type__type='SUB_CORRIDOR',
+                                        corridor__floor=self.floor).first().turned_on==False
+        assert Appliance.objects.filter(appliance_type__type='AIR_CONDITIONER',
+                                        corridor__corridor_type__type='SUB_CORRIDOR',
+                                        corridor__floor=self.floor).first().turned_on==False
+
+    @override_settings(LIGHTS_TURN_ON_INTERVAL=5)
+    def test_2_consequitive_motion_detection_action(self):
+
+        light = Appliance.objects.filter(appliance_type__type='LIGHT',corridor__floor=self.floor).first(); light.turned_on = False; light.save()
+        ac = Appliance.objects.filter(appliance_type__type='AIR_CONDITIONER',corridor__floor=self.floor).first(); ac.turned_on = True; ac.save()
+
+        payload = {
+            "corridor": Corridor.objects.filter(corridor_type__type='SUB_CORRIDOR',floor=self.floor).first().id
+        }
+        # create motion 1
+        self.client.post('/api/trigger_motion/', data=payload, content_type='application/json')
+
+        TriggerActions.motion_detection_trigger()
+
+        assert Appliance.objects.filter(appliance_type__type='LIGHT',
+                                        corridor__corridor_type__type='SUB_CORRIDOR',
+                                        corridor__floor=self.floor).first().turned_on == True
+        assert Appliance.objects.filter(appliance_type__type='AIR_CONDITIONER',
+                                        corridor__corridor_type__type='SUB_CORRIDOR',
+                                        corridor__floor=self.floor).first().turned_on == False
+
+        sleep(3)
+
+        # create motion 2
+        self.client.post('/api/trigger_motion/', data=payload, content_type='application/json')
+        TriggerActions.motion_detection_trigger()
+
+        sleep(3)
+
+        TriggerActions.motion_detection_trigger()
+
+        assert Appliance.objects.filter(appliance_type__type='LIGHT',
+                                        corridor__corridor_type__type='SUB_CORRIDOR',
+                                        corridor__floor=self.floor).first().turned_on==True
+        assert Appliance.objects.filter(appliance_type__type='AIR_CONDITIONER',
+                                        corridor__corridor_type__type='SUB_CORRIDOR',
+                                        corridor__floor=self.floor).first().turned_on==False
+
+        sleep(3)
+
+        TriggerActions.motion_detection_trigger()
+
+        assert Appliance.objects.filter(appliance_type__type='LIGHT',
+                                        corridor__corridor_type__type='SUB_CORRIDOR',
+                                        corridor__floor=self.floor).first().turned_on == False
+        assert Appliance.objects.filter(appliance_type__type='AIR_CONDITIONER',
+                                        corridor__corridor_type__type='SUB_CORRIDOR',
+                                        corridor__floor=self.floor).first().turned_on == True
 

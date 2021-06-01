@@ -42,7 +42,8 @@ class Corridor(models.Model):
     corridor_type = models.ForeignKey(CorridorType, on_delete=models.CASCADE)
 
     def save(self, *args, **kwargs):
-        self.name = 'Floor'+ str(self.floor.id) + ' ' + create_model_name(self,name=self.corridor_type.name)
+        floor_id = str(Floor.objects.count())
+        self.name = 'Floor'+ floor_id + ' ' + create_model_name(self,name=self.corridor_type.name)
         super().save(*args, **kwargs)
 
     def __str__(self):
